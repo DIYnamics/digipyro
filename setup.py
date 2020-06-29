@@ -12,9 +12,12 @@ setuptools.setup(
         "scipy",
         "matplotlib",
         "opencv-python",
-        "tkinter",
+        "tk",
     ],
-    scripts=["digipyro/scripts/.py"],
+    scripts=[
+        "digipyro/scripts/digipyro.py",
+        "digipyro/scripts/synth.py"]
+    ,
     license="Apache",
     keywords="education",
     url="https://github.com/DIYnamics/digipyro",
