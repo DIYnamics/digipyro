@@ -1,6 +1,7 @@
 import numpy as np
+import matplotlib.patches as patch
 
-g = 9.817
+g = 981.7
 
 def position(t, omega, u0, v0, x0):
     """Finds position of puck on paraboloid. The equations come from
@@ -22,7 +23,7 @@ def position(t, omega, u0, v0, x0):
     Returns
     -------
     x, y, z : floats
-        x, y, and z componets of the position [cm]
+        X, y, and z componets of the position [cm].
     """
     ot = omega * t
 
@@ -38,20 +39,22 @@ def circle(r):
     Parameters
     ----------
     r : float
-        radius of the circle [cm]
+        Radius of the circle [cm].
 
     Returns
     -------
-    xc, yc : array_like
-        x and y values of the circle
+    circle : object
+        Circle object to be plotted.
+
+    Notes
+    -----
+    Check matplotlib.patches.Circle for more information on the circle object.
     """
-    twopi = 2 * np.pi
+    circle = patch.Circle((0, 0), r, facecolor='none',
+                          edgecolor='white',
+                          linewidth=1.5)
 
-    k = np.arange(1, 102)
-    xc = r * np.cos(k * twopi / 100)
-    yc = r * np.sin(k * twopi / 100)
-
-    return xc, yc
+    return circle
 
 def parabola(r, omega):
     """Creates parabola that represents the sides of the paraboloid along y=0.

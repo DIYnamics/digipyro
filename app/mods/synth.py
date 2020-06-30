@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animate
+from PIL import Image
 
 import paraboloid as pbd
 
@@ -99,9 +100,22 @@ def animate_paraboloid(time, omega, u0, v0, x0, radius):
     rmax = radius*1.5
     size = (-1*(rmax), rmax)
 
+    xt, yt = [], []
+
+    resize = (150,75)
+    spinlab = Image.open('../static/SpinLabUCLA_BW_strokes.png')
+    spinlab = spinlab.resize(resize)
+    diynamics = Image.open('../static/diynamics-swirl-light.png')
+    diynamics = diynamics.resize(resize)
+
     # creating figure and plots
     fig, (a0, a1) = plt.subplots(2, 1, figsize=(6,8),
                                  gridspec_kw={'height_ratios': [3,1]})
+
+    # inserting watermark
+    fig.figimage(diynamics, xo=1000)
+    fig.figimage(spinlab, xo=10)
+
     # a0 plots out the top-view of the paraboloid
     a0.set_xlim(size)
     a0.set_ylim(size)
@@ -109,11 +123,13 @@ def animate_paraboloid(time, omega, u0, v0, x0, radius):
     a0.set_xlabel("X [cm]")
     a0.set_ylabel("Y [cm]")
 
-    a0.plot(circle[0], circle[1], color='white', label="Paraboloid")
+    a0.add_patch(circle)
+    # follows the puck path in the absolute axis
     puckTop, = a0.plot([], [], linestyle='none',
                        marker='o', mfc='white', mec='red', label="Puck")
-
-    a0.grid(color='grey')
+    # follows the puck path in the rotating axis
+    puckInt, = a0.plot([], [], linestyle='none', marker='.',
+                       mfc='green', ms=1, label="Inertial Path")
     a0.legend()
 
     # a1 plots out the side-view of the paraboloid
@@ -123,10 +139,10 @@ def animate_paraboloid(time, omega, u0, v0, x0, radius):
     a1.set_title("Side-View")
 
     a1.plot(parabola[0], parabola[1], color='white', label="Paraboloid")
+    # follows side view of the puck path
     puckSide, = a1.plot([], [], linestyle='none',
                         marker='o', mfc='white', mec='red', label="Puck")
 
-    a1.grid(color='grey')
     plt.tight_layout()
 
     # calculating out the values for each from
@@ -134,25 +150,39 @@ def animate_paraboloid(time, omega, u0, v0, x0, radius):
     t = np.linspace(start=0, stop=time, num=int(time*fps))
     frames = len(t)
     x, y, z = pbd.position(t, omega, u0, v0, x0)
+    dot = omega * t[1]
 
     def init():
         """Initialization function for the animation.
-        
+
         """
-        return puckTop, puckSide
+        return puckTop, puckInt, puckSide
 
     def animation_frame(i):
         """Specific frame of that animation.
-        
+
         """
         xpos = x[i]
         ypos = y[i]
         zpos = z[i]
 
+        # rotation of trajectory inprint on rotating axis
+        for j in range(i):
+            xn = xt[j] * np.cos(dot) - yt[j] * np.sin(dot)
+            yn = xt[j] * np.sin(dot) + yt[j] * np.cos(dot)
+            xt[j] = xn
+            yt[j] = yn
+
+        # adding points to the rotating axis
+        xt.append(xpos)
+        yt.append(ypos)
+
+        # setting points for animation
         puckTop.set_data(xpos, ypos)
+        puckInt.set_data(xt, yt)
         puckSide.set_data(xpos, zpos)
 
-        return puckTop, puckSide
+        return puckTop, puckInt, puckSide
 
     animation = animate.FuncAnimation(fig,
                                       init_func=init,
@@ -163,7 +193,7 @@ def animate_paraboloid(time, omega, u0, v0, x0, radius):
 
 def save_animation(animation, name):
     """Saves animation when called.
-    
+
     """
     animation.save(name, writer='ffmpeg', fps=30, dpi=200)
 
@@ -174,4 +204,4 @@ if __name__ == "__main__":
     if switch == 0:
         plt.show()
     elif switch == 1:
-        save_animation(animation, name)
+        save_animation(animation, '../../../' + name)
